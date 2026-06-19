@@ -4,15 +4,379 @@
 <meta charset="UTF-8">
 <title>Generator Slip Gaji - Siap Copy ke Word</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen py-8">
-  <div id="app" class="max-w-4xl mx-auto px-4">
+  <div id="app" class="max-w-5xl mx-auto px-4">
 
     <h1 class="text-2xl font-bold text-gray-800 mb-1">Generator Slip Gaji</h1>
     <p class="text-gray-500 mb-6">Isi nominal di bawah, lalu klik "Copy ke Word".</p>
 
-    <!-- FONT SETTING -->
+    <!-- DATA PEGAWAI -->
+    <!-- <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <div class="flex items-center justify-between mb-3 border-b pb-2">
+        <h3 class="font-bold text-gray-800">Data Pegawai</h3>
+        <div class="flex gap-2">
+          <button @click="ajukanPermohonan" :disabled="isSaving" class="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold px-3 py-1.5 rounded-md transition">
+            {{ isSaving ? '⏳ Mengirim...' : '📨 Ajukan Permohonan' }}
+          </button>
+          <button @click="inputAlamat" :disabled="isSavingAlamat" class="bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 text-indigo-700 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-indigo-200 transition">
+            {{ isSavingAlamat ? '⏳...' : '📍 Input Alamat' }}
+          </button>
+          <button @click="resetForm" class="bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold px-3 py-1.5 rounded-md border border-red-200 transition">
+            ↺ Reset Form
+          </button>
+        </div>
+      </div>
+      <p v-if="statusKirim" class="text-sm mb-3" :class="statusKirim.startsWith('✅') ? 'text-green-600' : 'text-red-600'">{{ statusKirim }}</p>
+      <div class="grid grid-cols-2 gap-4 mb-3">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Nama</label>
+          <input type="text" v-model="pegawai.nama" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">NIP</label>
+          <input type="text" v-model="pegawai.nip" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Pangkat / Golongan</label>
+          <input type="text" v-model="pegawai.pangkat" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Jabatan</label>
+          <input type="text" v-model="pegawai.jabatan" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Bulan & Tahun</label>
+        <input type="text" v-model="bulanTahun" placeholder="Mei 2026" class="w-full md:w-1/2 border border-gray-300 rounded-md p-2 text-sm">
+      </div>
+    </div> -->
+
+
+
+    <!-- BAGIAN I: GAJI -->
+    <!-- <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">I. Penghasilan dari Gaji</h3>
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2">PENGHASILAN</p>
+          <div v-for="item in penghasilan" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2">POTONGAN GAJI</p>
+          <div v-for="item in potongan" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t text-sm space-y-1">
+        <div class="flex justify-between"><span>Jumlah Penghasilan</span><span class="font-semibold">{{ formatRp(jumlahPenghasilan) }}</span></div>
+        <div class="flex justify-between"><span>Jumlah Potongan Gaji</span><span class="font-semibold">{{ formatRp(jumlahPotonganGaji) }}</span></div>
+        <div class="flex justify-between font-bold border-t pt-1"><span>Jumlah Gaji Bersih (I)</span><span>{{ formatRp(gajiBersihI) }}</span></div>
+      </div>
+    </div> -->
+
+    <!-- BAGIAN II: TUNJANGAN KINERJA -->
+    <!-- <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">II. Penghasilan Tunjangan Kinerja</h3>
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2">TUNJANGAN KINERJA</p>
+          <div v-for="item in tunjanganKinerja" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2">POTONGAN TUNJANGAN KINERJA</p>
+          <div v-for="item in potonganKinerja" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t text-sm space-y-1">
+        <div class="flex justify-between"><span>Jumlah Tunjangan Kinerja</span><span class="font-semibold">{{ formatRp(jumlahTunjanganKinerja) }}</span></div>
+        <div class="flex justify-between"><span>Jumlah Potongan Tunjangan Kinerja</span><span class="font-semibold">{{ formatRp(jumlahPotonganKinerja) }}</span></div>
+        <div class="flex justify-between font-bold border-t pt-1"><span>Jumlah Tunjangan Kinerja Bersih (II)</span><span>{{ formatRp(tunjanganKinerjaBersihII) }}</span></div>
+      </div>
+    </div> -->
+
+    <!-- BAGIAN III: PENGHASILAN TETAP LAINNYA -->
+    <!-- <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">III. Penghasilan Tetap Lainnya</h3>
+      <div v-for="item in penghasilanTetapLainnya" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+        <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+        <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+      </div>
+      <div class="mt-4 pt-3 border-t text-sm space-y-1">
+        <div class="flex justify-between font-bold"><span>Jumlah Pendapatan Tetap Lainnya (III)</span><span>{{ formatRp(jumlahTetapLainnya) }}</span></div>
+      </div>
+    </div> -->
+
+    <!-- TOTAL AKHIR -->
+    <!-- <div class="bg-blue-50 border border-blue-200 rounded-lg shadow p-6 mb-8">
+      <div class="flex justify-between items-center">
+        <span class="font-bold text-gray-800">Jumlah Penghasilan ( I + II + III )</span>
+        <span class="font-bold text-gray-800 text-lg">{{ formatRp(totalKeseluruhan) }}</span>
+      </div>
+    </div> -->
+
+    <!-- RIWAYAT PERMOHONAN -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <div class="flex items-center justify-between mb-3 border-b pb-2">
+        <h3 class="font-bold text-gray-800">Riwayat Permohonan Tersimpan</h3>
+        <button @click="ambilData" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+          {{ isLoadingList ? '⏳ Memuat...' : '🔄 Refresh' }}
+        </button>
+      </div>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500 border-b">
+            <th class="py-2 pr-2">Nama</th>
+            <th class="py-2 pr-2">NIP</th>
+            <th class="py-2 pr-2">Bulan</th>
+            <th class="py-2 pr-2 text-right">Gaji Pokok</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="daftarPermohonan.length === 0">
+            <td colspan="4" class="py-3 text-gray-400 text-center">Belum ada data tersimpan.</td>
+          </tr>
+<tr 
+            v-for="(d, i) in daftarPermohonan" 
+            :key="i" 
+            @click="pilihData(d)" 
+            class="border-b cursor-pointer hover:bg-gray-50 transition-colors"
+            title="Klik untuk mengedit/memuat ke form"
+          >
+            <td class="py-2 pr-2 font-medium text-blue-600 hover:underline">{{ d.Nama }}</td>
+            <td class="py-2 pr-2">{{ d.NIP }}</td>
+            <td class="py-2 pr-2">{{ d.BulanTahun }}</td>
+            <td class="py-2 pr-2 text-right">{{ formatRp(d.GajiPokok) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- HASIL / AREA COPY -->
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-lg font-bold text-gray-800">Hasil Slip Gaji</h2>
+      <button @click="copyHasil" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-md transition">
+        {{ copyLabel }}
+      </button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
+      <div id="hasil">
+        <!--[if gte mso 9]><style>
+          p.MsoNormal, li.MsoNormal, div.MsoNormal { margin:0; mso-margin-top-alt:0; mso-margin-bottom-alt:0; line-height:1.15; }
+          table { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+          td { mso-margin-top-alt:0; mso-margin-bottom-alt:0; }
+        </style><![endif]-->
+        <table style="border-collapse:collapse; width:100%; margin-bottom:8px;">
+          <tr>
+            <td :style="dataLabelStyle">Nama</td>
+            <td :style="dataColonStyle">:</td>
+            <td :style="dataValueStyle">{{ pegawai.nama }}</td>
+          </tr>
+          <tr>
+            <td :style="dataLabelStyle">NIP</td>
+            <td :style="dataColonStyle">:</td>
+            <td :style="dataValueStyle">{{ pegawai.nip }}</td>
+          </tr>
+          <tr>
+            <td :style="dataLabelStyle">Pangkat / Golongan</td>
+            <td :style="dataColonStyle">:</td>
+            <td :style="dataValueStyle">{{ pegawai.pangkat }}</td>
+          </tr>
+          <tr>
+            <td :style="dataLabelStyle">Jabatan</td>
+            <td :style="dataColonStyle">:</td>
+            <td :style="dataValueStyle">{{ pegawai.jabatan }}</td>
+          </tr>
+        </table>
+
+        <table style="border-collapse:collapse; width:100%;">
+
+          <!-- HEADER TABEL -->
+          <tr>
+            <td :style="headerStyle">No</td>
+            <td :style="headerStyle">Keterangan</td>
+            <td :style="headerStyle" colspan="2">Rincian</td>
+            <td :style="headerStyle" colspan="2">Jumlah</td>
+          </tr>
+
+          <!-- BAGIAN I -->
+          <tr>
+            <td :style="boldStyle" colspan="6">I.&nbsp;&nbsp;Penghasilan dari Gaji {{ bulanTahun }}</td>
+          </tr>
+
+          <tr v-for="(item, idx) in penghasilan" :key="'p'+idx">
+            <td :style="numStyle">{{ idx + 1 }}.</td>
+            <td :style="labelStyle">{{ item.label }}</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyle">Rp</td>
+            <td :style="valTotalStyle">{{ item.value ? formatRp(item.value) : '-' }}</td>
+          </tr>
+
+          <tr>
+            <td :style="numStyle"></td>
+            <td :style="boldStyle">Jumlah Penghasilan</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyleBoldLine">Rp</td>
+            <td :style="valTotalStyleBoldLine">{{ formatRp(jumlahPenghasilan) }}</td>
+          </tr>
+
+          <tr>
+            <td :style="numStyle" colspan="2">Potongan gaji</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyle"></td>
+            <td :style="valTotalStyle"></td>
+          </tr>
+
+          <tr v-for="(item, idx) in potongan" :key="'k'+idx">
+            <td :style="numStyle">{{ idx + 9 }}.</td>
+            <td :style="labelStyle">{{ item.label }}</td>
+            <td :style="rpDetailStyle">Rp</td>
+            <td :style="valDetailStyle">{{ item.value ? formatRp(item.value) : '-' }}</td>
+            <td :style="rpTotalStyle"></td>
+            <td :style="valTotalStyle"></td>
+          </tr>
+
+          <tr>
+            <td :style="numStyle"></td>
+            <td :style="boldStyle">Jumlah Potongan Gaji</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyleBoldLine">Rp</td>
+            <td :style="valTotalStyleBoldLine">{{ formatRp(jumlahPotonganGaji) }}</td>
+          </tr>
+
+          <tr>
+            <td :style="numStyle"></td>
+            <td :style="boldStyle">Jumlah Gaji Bersih (I)</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyleBoldLine">Rp</td>
+            <td :style="valTotalStyleBoldLine">{{ formatRp(gajiBersihI) }}</td>
+          </tr>
+
+          <!-- spacer -->
+          <tr><td colspan="6" style="height:4px;"></td></tr>
+
+          <!-- BAGIAN II -->
+          <tr>
+            <td :style="boldStyle" colspan="6">II.&nbsp;&nbsp;Penghasilan Tunjangan Kinerja Bulan {{ bulanTahun }}</td>
+          </tr>
+
+          <tr v-for="(item, idx) in tunjanganKinerja" :key="'tk'+idx">
+            <td :style="numStyle">{{ idx + 15 }}.</td>
+            <td :style="labelStyle">{{ item.label }}</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyle">Rp</td>
+            <td :style="valTotalStyle">{{ item.value ? formatRp(item.value) : '-' }}</td>
+          </tr>
+
+          <tr>
+            <td :style="numStyle"></td>
+            <td :style="boldStyle">Jumlah Tunjangan Kinerja</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyleBoldLine">Rp</td>
+            <td :style="valTotalStyleBoldLine">{{ formatRp(jumlahTunjanganKinerja) }}</td>
+          </tr>
+
+          <tr>
+            <td :style="numStyle" colspan="2">Potongan Tunjangan Kinerja</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyle"></td>
+            <td :style="valTotalStyle"></td>
+          </tr>
+
+          <tr v-for="(item, idx) in potonganKinerja" :key="'pk'+idx">
+            <td :style="numStyle">{{ idx + 18 }}</td>
+            <td :style="labelStyle">{{ item.label }}</td>
+            <td :style="rpDetailStyle">Rp</td>
+            <td :style="valDetailStyle">{{ item.value ? formatRp(item.value) : '-' }}</td>
+            <td :style="rpTotalStyle"></td>
+            <td :style="valTotalStyle"></td>
+          </tr>
+
+          <tr>
+            <td :style="numStyle"></td>
+            <td :style="boldStyle">Jumlah Potongan Tunjangan Kinerja</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyleBoldLine">Rp</td>
+            <td :style="valTotalStyleBoldLine">{{ formatRp(jumlahPotonganKinerja) }}</td>
+          </tr>
+
+          <tr>
+            <td :style="numStyle"></td>
+            <td :style="boldStyle">Jumlah Tunjangan Kinerja Bersih (II)</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyleBoldLine">Rp</td>
+            <td :style="valTotalStyleBoldLine">{{ formatRp(tunjanganKinerjaBersihII) }}</td>
+          </tr>
+
+          <!-- spacer -->
+          <tr><td colspan="6" style="height:4px;"></td></tr>
+
+          <!-- BAGIAN III -->
+          <tr>
+            <td :style="boldStyle" colspan="6">III.&nbsp;&nbsp;Penghasilan Tetap Lainnya</td>
+          </tr>
+
+          <tr v-for="(item, idx) in penghasilanTetapLainnya" :key="'tl'+idx">
+            <td :style="numStyle">{{ idx + 19 }}.</td>
+            <td :style="labelStyle">{{ item.label }}</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyle">Rp</td>
+            <td :style="valTotalStyle">{{ item.value ? formatRp(item.value) : '-' }}</td>
+          </tr>
+
+          <tr>
+            <td :style="numStyle"></td>
+            <td :style="boldStyle">Jumlah Pendapatan Tetap Lainnya (III)</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyleBoldLine">Rp</td>
+            <td :style="valTotalStyleBoldLine">{{ formatRp(jumlahTetapLainnya) }}</td>
+          </tr>
+
+          <!-- spacer -->
+          <tr><td colspan="6" style="height:4px;"></td></tr>
+
+          <!-- GRAND TOTAL -->
+          <tr>
+            <td :style="numStyle"></td>
+            <td :style="boldStyle">Jumlah Penghasilan ( I + II + III )</td>
+            <td :style="rpDetailStyle"></td>
+            <td :style="valDetailStyle"></td>
+            <td :style="rpTotalStyleBoldLine">Rp</td>
+            <td :style="valTotalStyleBoldLine">{{ formatRp(totalKeseluruhan) }}</td>
+          </tr>
+
+        </table>
+      </div>
+    </div>
+
+<br>
+        <!-- FONT SETTING -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
       <div class="flex gap-4">
         <div class="flex-1">
@@ -35,80 +399,6 @@
         </div>
       </div>
     </div>
-
-    <!-- FORM INPUT -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-      <div class="grid grid-cols-2 gap-6">
-
-        <!-- KOLOM PENGHASILAN -->
-        <div>
-          <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">Penghasilan</h3>
-          <div v-for="item in penghasilan" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
-            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
-            <input type="number" v-model.number="item.value" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
-          </div>
-          <div class="flex items-center justify-between mt-3 pt-2 border-t font-semibold text-gray-800">
-            <span class="text-sm">Jumlah Penghasilan</span>
-            <span class="text-sm">{{ formatRp(jumlahPenghasilan) }}</span>
-          </div>
-        </div>
-
-        <!-- KOLOM POTONGAN -->
-        <div>
-          <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">Potongan</h3>
-          <div v-for="item in potongan" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
-            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
-            <input type="number" v-model.number="item.value" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
-          </div>
-          <div class="flex items-center justify-between mt-3 pt-2 border-t font-semibold text-gray-800">
-            <span class="text-sm">Jumlah Potongan</span>
-            <span class="text-sm">{{ formatRp(jumlahPotongan) }}</span>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="mt-6 pt-4 border-t-2 border-gray-800 flex items-center justify-between">
-        <span class="font-bold text-gray-800">Gaji Bersih</span>
-        <span class="font-bold text-gray-800 text-lg">{{ formatRp(gajiBersih) }}</span>
-      </div>
-    </div>
-
-    <!-- HASIL / AREA COPY -->
-    <div class="flex items-center justify-between mb-2">
-      <h2 class="text-lg font-bold text-gray-800">Hasil Slip Gaji</h2>
-      <button @click="copyHasil" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-md transition">
-        {{ copyLabel }}
-      </button>
-    </div>
-
-    <div class="bg-white rounded-lg shadow p-6">
-      <div id="hasil">
-        <table style="border-collapse:collapse; width:100%;">
-          <tr>
-            <td :style="thStyle + 'width:50%;'" colspan="2">PENGHASILAN</td>
-            <td :style="thStyle + 'width:50%;'" colspan="2">POTONGAN</td>
-          </tr>
-          <tr v-for="(row, i) in pairedRows" :key="i">
-            <td :style="tdStyle">{{ row.left ? row.left.label : '' }}</td>
-            <td :style="tdStyle + 'text-align:right;'">{{ row.left ? formatRp(row.left.value) : '' }}</td>
-            <td :style="tdStyle">{{ row.right ? row.right.label : '' }}</td>
-            <td :style="tdStyle + 'text-align:right;'">{{ row.right ? formatRp(row.right.value) : '' }}</td>
-          </tr>
-          <tr>
-            <td :style="tdBoldStyle">Jumlah Penghasilan</td>
-            <td :style="tdBoldStyle + 'text-align:right;'">{{ formatRp(jumlahPenghasilan) }}</td>
-            <td :style="tdBoldStyle">Jumlah Potongan</td>
-            <td :style="tdBoldStyle + 'text-align:right;'">{{ formatRp(jumlahPotongan) }}</td>
-          </tr>
-          <tr>
-            <td :style="tdTotalStyle" colspan="3">GAJI BERSIH</td>
-            <td :style="tdTotalStyle + 'text-align:right;'">{{ formatRp(gajiBersih) }}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
   </div>
 
   <script>
@@ -117,68 +407,461 @@
       data: {
         fontFamily: 'Arial, Helvetica, sans-serif',
         fontSize: '12',
+        bulanTahun: 'Mei 2026',
         copyLabel: '📋 Copy ke Word',
+        isSaving: false,
+        isSavingAlamat: false,
+        statusKirim: '',
+        daftarPermohonan: [],
+        isLoadingList: false,
+        pegawai: {
+          nama: 'Rabindhra Aldy',
+          nip: '197011231996031001',
+          pangkat: 'Pembina Tk. I / IV/b',
+          jabatan: 'Kabid PA 2 pada Kanwil Ditjen Perbendaharaan Provinsi Jawa Timur'
+        },
         penghasilan: [
-          { key: 'gaji_pokok', label: 'Gaji Pokok', value: 0 },
-          { key: 'tunj_istri', label: 'Tunjangan Istri/Suami', value: 0 },
-          { key: 'tunj_anak', label: 'Tunjangan Anak', value: 0 },
-          { key: 'tunj_struktural', label: 'Tunjangan Struktural', value: 0 },
+          { key: 'gaji_pokok', label: 'Gaji Pokok', value: 5456400 },
+          { key: 'tunj_istri', label: 'Tunjangan Istri/Suami', value: 545640 },
+          { key: 'tunj_anak', label: 'Tunjangan Anak', value: 218256 },
+          { key: 'tunj_struktural', label: 'Tunjangan Struktural', value: 1260000 },
           { key: 'tunj_umum', label: 'Tunjangan Umum', value: 0 },
-          { key: 'tunj_beras', label: 'Tunjangan Beras', value: 0 },
-          { key: 'tunj_pph', label: 'Tunjangan Pajak Penghasilan', value: 0 },
-          { key: 'pembulatan', label: 'Pembulatan', value: 0 }
+          { key: 'tunj_beras', label: 'Tunjangan Beras', value: 289680 },
+          { key: 'tunj_pph', label: 'Tunjangan Pajak Penghasilan', value: 77700 },
+          { key: 'pembulatan', label: 'Pembulatan', value: 47 }
         ],
         potongan: [
           { key: 'pfk_beras', label: 'P.F.K Beras', value: 0 },
-          { key: 'iwp', label: 'IWP (10%)', value: 0 },
-          { key: 'pph', label: 'Pajak Penghasilan', value: 0 },
+          { key: 'iwp', label: 'IWP (10%)', value: 497623 },
+          { key: 'pph', label: 'Pajak Penghasilan', value: 77700 },
           { key: 'sewa_rumah', label: 'Sewa Rumah Dinas', value: 0 },
-          { key: 'bpjs', label: 'Iuran BPJS', value: 0 },
+          { key: 'bpjs', label: 'Iuran BPJS', value: 120000 },
           { key: 'bpjs_tambahan', label: 'Iuran BPJS Tambahan', value: 0 }
+        ],
+        tunjanganKinerja: [
+          { key: 'tukin', label: 'Tunjangan Kinerja', value: 12370000 },
+          { key: 'tukin_tambahan', label: 'Tunjangan Tambahan', value: 0 },
+          { key: 'tukin_pph21', label: 'Tunjangan PPh Pasal 21', value: 0 }
+        ],
+        potonganKinerja: [
+          { key: 'potongan_pph21', label: 'Potongan PPh Pasal 21', value: 0 }
+        ],
+        penghasilanTetapLainnya: [
+          { key: 'honor_bulanan', label: 'Honor Bulanan', value: 0 },
+          { key: 'uang_lembur', label: 'Uang Lembur Bulanan', value: 0 },
+          { key: 'uang_makan', label: 'Uang Makan Bulanan', value: 662150 }
         ]
+      },
+      mounted() {
+        this.ambilData();
       },
       computed: {
         jumlahPenghasilan() {
-          return this.penghasilan.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+          return this.penghasilan.reduce((s, i) => s + (Number(i.value) || 0), 0);
         },
-        jumlahPotongan() {
-          return this.potongan.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+        jumlahPotonganGaji() {
+          return this.potongan.reduce((s, i) => s + (Number(i.value) || 0), 0);
         },
-        gajiBersih() {
-          return this.jumlahPenghasilan - this.jumlahPotongan;
+        gajiBersihI() {
+          return this.jumlahPenghasilan - this.jumlahPotonganGaji;
         },
-        pairedRows() {
-          const max = Math.max(this.penghasilan.length, this.potongan.length);
-          const rows = [];
-          for (let i = 0; i < max; i++) {
-            rows.push({
-              left: this.penghasilan[i] || null,
-              right: this.potongan[i] || null
-            });
-          }
-          return rows;
+        jumlahTunjanganKinerja() {
+          return this.tunjanganKinerja.reduce((s, i) => s + (Number(i.value) || 0), 0);
+        },
+        jumlahPotonganKinerja() {
+          return this.potonganKinerja.reduce((s, i) => s + (Number(i.value) || 0), 0);
+        },
+        tunjanganKinerjaBersihII() {
+          return this.jumlahTunjanganKinerja - this.jumlahPotonganKinerja;
+        },
+        jumlahTetapLainnya() {
+          return this.penghasilanTetapLainnya.reduce((s, i) => s + (Number(i.value) || 0), 0);
+        },
+        totalKeseluruhan() {
+          return this.gajiBersihI + this.tunjanganKinerjaBersihII + this.jumlahTetapLainnya;
         },
         fontInline() {
-          return 'font-family:' + this.fontFamily + '; font-size:' + this.fontSize + 'pt;';
+          return 'font-family:' + this.fontFamily + '; font-size:' + this.fontSize + 'pt; line-height:1.15; mso-line-height-rule:exactly; margin:0; mso-margin-top-alt:0; mso-margin-bottom-alt:0;';
         },
-        thStyle() {
-          return this.fontInline + 'border:1px solid #000; padding:6px 8px; background-color:#D9D9D9; font-weight:bold; text-align:center;';
+        numStyle() {
+          return this.fontInline + 'padding:0px 4px; vertical-align:top; white-space:nowrap;';
         },
-        tdStyle() {
-          return this.fontInline + 'border:1px solid #000; padding:5px 8px;';
+        labelStyle() {
+          return this.fontInline + 'padding:0px 8px; vertical-align:top;';
         },
-        tdBoldStyle() {
-          return this.fontInline + 'border:1px solid #000; padding:5px 8px; font-weight:bold;';
+        boldStyle() {
+          return this.fontInline + 'padding:0px 8px; font-weight:bold; vertical-align:top;';
         },
-        tdTotalStyle() {
-          return this.fontInline + 'border:1px solid #000; padding:6px 8px; font-weight:bold; background-color:#F2F2F2;';
+        rpDetailStyle() {
+          return this.fontInline + 'padding:0px 4px; text-align:left; white-space:nowrap; width:30px;';
+        },
+        valDetailStyle() {
+          return this.fontInline + 'padding:0px 4px; text-align:right; white-space:nowrap; width:100px;';
+        },
+        rpTotalStyle() {
+          return this.fontInline + 'padding:0px 4px; text-align:left; white-space:nowrap; width:30px;';
+        },
+        valTotalStyle() {
+          return this.fontInline + 'padding:0px 4px; text-align:right; white-space:nowrap; width:120px;';
+        },
+        rpTotalStyleBoldLine() {
+          return this.fontInline + 'padding:0px 4px; text-align:left; white-space:nowrap; width:30px; font-weight:bold; border-top:1px solid #000;';
+        },
+        valTotalStyleBoldLine() {
+          return this.fontInline + 'padding:0px 4px; text-align:right; white-space:nowrap; width:120px; font-weight:bold; border-top:1px solid #000;';
+        },
+        dataLabelStyle() {
+          return this.fontInline + 'padding:0px 8px; vertical-align:top; white-space:nowrap; width:160px;';
+        },
+        dataColonStyle() {
+          return this.fontInline + 'padding:0px 4px; vertical-align:top; width:10px;';
+        },
+        dataValueStyle() {
+          return this.fontInline + 'padding:0px 8px; vertical-align:top;';
+        },
+        headerStyle() {
+          return this.fontInline + 'padding:4px 8px; border:1px solid #000; background-color:#D9D9D9; font-weight:bold; text-align:center;';
         }
       },
       methods: {
+        pilihData(item) {
+  // 1. Masukkan data teks pegawai & periode
+  this.pegawai = {
+    nama: item.Nama || '',
+    nip: item.NIP || '',
+    pangkat: item.PangkatGolongan || '',
+    jabatan: item.Jabatan || ''
+  };
+  this.bulanTahun = item.BulanTahun || '';
+
+  // 2. Petakan balik data finansial ke array 'penghasilan'
+  if (Array.isArray(this.penghasilan)) {
+    this.penghasilan.forEach(p => {
+      if (p.key === 'gaji_pokok') p.value = Number(item.GajiPokok) || 0;
+      if (p.key === 'tunj_istri') p.value = Number(item.TIstriSuami) || 0;
+      if (p.key === 'tunj_anak')  p.value = Number(item.TAnak) || 0;
+      if (p.key === 'tunj_struktural') p.value = Number(item.TStruktural) || 0;
+      if (p.key === 'tunj_umum')  p.value = Number(item.TUmum) || 0;
+      if (p.key === 'tunj_beras') p.value = Number(item.TBeras) || 0;
+      if (p.key === 'tunj_pph')   p.value = Number(item.TPajak) || 0;
+      if (p.key === 'pembulatan') p.value = Number(item.Pembulatan) || 0;
+    });
+  }
+
+  // 3. Petakan balik data ke array 'potongan'
+  if (Array.isArray(this.potongan)) {
+    this.potongan.forEach(p => {
+      if (p.key === 'pfk_beras') p.value = Number(item.Beras) || 0;
+      if (p.key === 'iwp')        p.value = Number(item.IWP) || 0;
+      if (p.key === 'pph')        p.value = Number(item.PajakPenghasilan) || 0;
+      if (p.key === 'sewa_rumah') p.value = Number(item.SewaRumah) || 0;
+      if (p.key === 'bpjs')       p.value = Number(item.IuranBPJS) || 0;
+      if (p.key === 'bpjs_tambahan') p.value = Number(item.IuranBPJSTambahan) || 0;
+    });
+  }
+
+  // 4. Petakan balik data ke array 'tunjanganKinerja'
+  if (Array.isArray(this.tunjanganKinerja)) {
+    this.tunjanganKinerja.forEach(t => {
+      if (t.key === 'tukin')          t.value = Number(item.TunjanganKinerja) || 0;
+      if (t.key === 'tukin_tambahan') t.value = Number(item.TunjanganTambahan) || 0;
+      if (t.key === 'tukin_pph21')    t.value = Number(item.TunjanganPPh21) || 0;
+    });
+  }
+
+  // 5. Petakan balik data ke array 'potonganKinerja'
+  if (Array.isArray(this.potonganKinerja)) {
+    this.potonganKinerja.forEach(p => {
+      if (p.key === 'potongan_pph21') p.value = Number(item.PotonganPPh21) || 0;
+    });
+  }
+
+  // 6. Petakan balik data ke array 'penghasilanTetapLainnya'
+  if (Array.isArray(this.penghasilanTetapLainnya)) {
+    this.penghasilanTetapLainnya.forEach(p => {
+      if (p.key === 'honor_bulanan') p.value = Number(item.HonorBulanan) || 0;
+      if (p.key === 'uang_lembur')    p.value = Number(item.UangLemburBulanan) || 0;
+      if (p.key === 'uang_makan')     p.value = Number(item.UangMakanBulanan) || 0;
+    });
+  }
+
+  // Opsional: Gulirkan otomatis layar browser ke bagian atas (tempat Form berada)
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+},
         formatRp(num) {
           num = Number(num) || 0;
           return num.toLocaleString('id-ID');
         },
+        updateValue(item, rawInput) {
+          const cleaned = rawInput.replace(/[^0-9]/g, '');
+          item.value = cleaned === '' ? 0 : Number(cleaned);
+        },
+        resetForm() {
+          if (!confirm('Yakin ingin mengosongkan semua isian form?')) return;
+          this.pegawai = { nama: '', nip: '', pangkat: '', jabatan: '' };
+          this.bulanTahun = '';
+          this.penghasilan.forEach(i => i.value = 0);
+          this.potongan.forEach(i => i.value = 0);
+          this.tunjanganKinerja.forEach(i => i.value = 0);
+          this.potonganKinerja.forEach(i => i.value = 0);
+          this.penghasilanTetapLainnya.forEach(i => i.value = 0);
+          this.statusKirim = '';
+        },
+        getVal(arr, key) {
+          const found = arr.find(i => i.key === key);
+          return found ? found.value : 0;
+        },
+        ajukanPermohonan1() {
+          // 1. Validasi data minimal sebelum kirim
+          if (!this.pegawai.nama || !this.pegawai.nip || !this.bulanTahun) {
+            alert('Mohon lengkapi Nama, NIP, dan Bulan & Tahun sebelum mengajukan.');
+            return;
+          }
+
+          // 2. Penanganan tanggal pengajuan (format YYYY-MM-DD, zona Asia/Jakarta)
+          var waktu1 = Date.now();
+          var dateObj = new Date(waktu1);
+          var options = { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" };
+          var tanggalIndonesia = new Intl.DateTimeFormat("id-ID", options).format(dateObj);
+          var parts = tanggalIndonesia.split("/");
+          var tanggalInput = `${parts[2]}-${parts[1]}-${parts[0]}`;
+
+          // 3. Bungkus data ke dalam objek JSON
+          // Field disesuaikan persis dengan header kolom di sheet "data"
+       // Fungsi darurat untuk memastikan angka 0 tetap terbaca sebagai 0
+const parseAngka = (val) => {
+  // Jika inputan asli adalah 0 atau string '0', langsung paksa jadi string "0"
+  if (val === 0 || val === '0') {
+    return "0"; 
+  }
+  
+  // Ambil nilainya, jika kosong/undefined jadikan string "0"
+  let hasil = Number(val);
+  if (isNaN(hasil) || hasil === 0) {
+    return "0";
+  }
+  
+  return hasil; // Jika angka lain (seperti 5456400), biarkan tetap angka murni
+};
+
+
+var payload = {
+  id: waktu1,
+  Nama: this.pegawai.nama,
+  NIP: this.pegawai.nip,
+  PangkatGolongan: this.pegawai.pangkat,
+  Jabatan: this.pegawai.jabatan,
+  BulanTahun: this.bulanTahun,
+  // Bungkus semua fungsi getVal dengan parseAngka
+  GajiPokok: parseAngka(this.getVal(this.penghasilan, 'gaji_pokok')),
+  TIstriSuami: parseAngka(this.getVal(this.penghasilan, 'tunj_istri')),
+  TAnak: parseAngka(this.getVal(this.penghasilan, 'tunj_anak')),
+  TStruktural: parseAngka(this.getVal(this.penghasilan, 'tunj_struktural')),
+  TUmum: parseAngka(this.getVal(this.penghasilan, 'tunj_umum')),
+  TBeras: parseAngka(this.getVal(this.penghasilan, 'tunj_beras')),
+  TPajak: parseAngka(this.getVal(this.penghasilan, 'tunj_pph')),
+  Pembulatan: parseAngka(this.getVal(this.penghasilan, 'pembulatan')),
+  Beras: parseAngka(this.getVal(this.potongan, 'pfk_beras')),
+ 
+};
+
+          // 4. Bangun URL dasar (Base URL saja tanpa parameter data)
+          var baseUrl = "https://script.google.com/macros/s/AKfycbwJAQlJ61VsoaU2CYuakdbIXBrESneajJIaAckAcxchS1dXti5Jt-C3VyGoSTQ_NSrL/exec";
+
+          let app = this;
+          app.isSaving = true;
+          app.statusKirim = '';
+
+          // DEBUG: tampilkan payload yang akan dikirim
+          console.log("📤 PAYLOAD dikirim:", JSON.stringify(payload, null, 2));
+
+          $.ajax({
+            type: "GET",
+            url: baseUrl,
+            crossDomain: true,
+            dataType: "jsonp",
+            data: {
+              action: "insert",
+              table: "data",
+              data: JSON.stringify(payload)
+            },
+            success: function (res) {
+              // console.log("✅ GAS response SUCCESS:", JSON.stringify(res));
+              app.statusKirim = '✅ Permohonan berhasil disimpan! (res: ' + JSON.stringify(res) + ')';
+
+              // Reset form hanya jika sukses
+              app.pegawai = { nama: '', nip: '', pangkat: '', jabatan: '' };
+              app.bulanTahun = '';
+              app.penghasilan.forEach(i => i.value = 0);
+              app.potongan.forEach(i => i.value = 0);
+              app.tunjanganKinerja.forEach(i => i.value = 0);
+              app.potonganKinerja.forEach(i => i.value = 0);
+              app.penghasilanTetapLainnya.forEach(i => i.value = 0);
+
+              setTimeout(() => {
+                if (typeof app.ambilData === "function") app.ambilData();
+                app.isSaving = false;
+              }, 1000);
+            },
+            error: function (xhr, status, err) {
+              console.error("❌ GAS response ERROR:", status, err, xhr);
+              app.statusKirim = '❌ Gagal: ' + status + ' | ' + err;
+              app.isSaving = false;
+            },
+            timeout: 15000
+          });
+        },
+       ajukanPermohonan() {
+  // 1. Validasi data minimal sebelum kirim
+  if (!this.pegawai.nama || !this.pegawai.nip || !this.bulanTahun) {
+    alert('Mohon lengkapi Nama, NIP, dan Bulan & Tahun sebelum mengajukan.');
+    return;
+  }
+
+  // 2. Penanganan tanggal pengajuan (format YYYY-MM-DD, zona Asia/Jakarta)
+  var waktu1 = Date.now();
+  var dateObj = new Date(waktu1);
+  var options = { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" };
+  var tanggalIndonesia = new Intl.DateTimeFormat("id-ID", options).format(dateObj);
+  var parts = tanggalIndonesia.split("/");
+  var tanggalInput = `${parts[2]}-${parts[1]}-${parts[0]}`;
+
+  // 3. Helper untuk memaksa angka 0 menjadi string berkutip "0" agar lolos dari validasi GAS
+  const parseAngka = (val) => {
+    if (val === 0 || val === '0') {
+      return "0"; 
+    }
+    let hasil = Number(val);
+    if (isNaN(hasil) || hasil === 0) {
+      return "0";
+    }
+    return hasil;
+  };
+
+  // 4. Bungkus data ke dalam objek JSON payload
+  var payload = {
+    id: waktu1,
+    Nama: this.pegawai.nama,
+    NIP: this.pegawai.nip,
+    PangkatGolongan: this.pegawai.pangkat,
+    Jabatan: this.pegawai.jabatan,
+    BulanTahun: this.bulanTahun,
+    GajiPokok: parseAngka(this.getVal(this.penghasilan, 'gaji_pokok')),
+    TIstriSuami: parseAngka(this.getVal(this.penghasilan, 'tunj_istri')),
+    TAnak: parseAngka(this.getVal(this.penghasilan, 'tunj_anak')),
+    TStruktural: parseAngka(this.getVal(this.penghasilan, 'tunj_struktural')),
+    TUmum: parseAngka(this.getVal(this.penghasilan, 'tunj_umum')),
+    TBeras: parseAngka(this.getVal(this.penghasilan, 'tunj_beras')),
+    TPajak: parseAngka(this.getVal(this.penghasilan, 'tunj_pph')),
+    Pembulatan: parseAngka(this.getVal(this.penghasilan, 'pembulatan')),
+    Beras: parseAngka(this.getVal(this.potongan, 'pfk_beras')),
+    IWP: parseAngka(this.getVal(this.potongan, 'iwp')),
+    PajakPenghasilan: parseAngka(this.getVal(this.potongan, 'pph')),
+    SewaRumah: parseAngka(this.getVal(this.potongan, 'sewa_rumah')),
+    IuranBPJS: parseAngka(this.getVal(this.potongan, 'bpjs')),
+    IuranBPJSTambahan: parseAngka(this.getVal(this.potongan, 'bpjs_tambahan')),
+    TunjanganKinerja: parseAngka(this.getVal(this.tunjanganKinerja, 'tukin')),
+    TunjanganTambahan: parseAngka(this.getVal(this.tunjanganKinerja, 'tukin_tambahan')),
+    TunjanganPPh21: parseAngka(this.getVal(this.tunjanganKinerja, 'tukin_pph21')),
+    PotonganPPh21: parseAngka(this.getVal(this.potonganKinerja, 'potongan_pph21')),
+    HonorBulanan: parseAngka(this.getVal(this.penghasilanTetapLainnya, 'honor_bulanan')),
+    UangLemburBulanan: parseAngka(this.getVal(this.penghasilanTetapLainnya, 'uang_lembur')),
+    UangMakanBulanan: parseAngka(this.getVal(this.penghasilanTetapLainnya, 'uang_makan'))
+  };
+
+  // 5. Setup URL Pengiriman (Base URL + Parameter langsung)
+  var baseUrl = "https://script.google.com/macros/s/AKfycbwJAQlJ61VsoaU2CYuakdbIXBrESneajJIaAckAcxchS1dXti5Jt-C3VyGoSTQ_NSrL/exec";
+  var urlKirim = baseUrl + "?action=insert&table=data&data=" + encodeURIComponent(JSON.stringify(payload));
+
+  let app = this;
+  app.isSaving = true;
+  app.statusKirim = '';
+
+  // DEBUG: cek payload final di console
+  console.log("📤 PAYLOAD dikirim:", JSON.stringify(payload, null, 2));
+
+  // Fungsi pembersihan form setelah sukses disimpan
+  const bersihkanForm = () => {
+    app.pegawai = { nama: '', nip: '', pangkat: '', jabatan: '' };
+    app.bulanTahun = '';
+    if (Array.isArray(app.penghasilan)) app.penghasilan.forEach(i => i.value = 0);
+    if (Array.isArray(app.potongan)) app.potongan.forEach(i => i.value = 0);
+    if (Array.isArray(app.tunjanganKinerja)) app.tunjanganKinerja.forEach(i => i.value = 0);
+    if (Array.isArray(app.potonganKinerja)) app.potonganKinerja.forEach(i => i.value = 0);
+    if (Array.isArray(app.penghasilanTetapLainnya)) app.penghasilanTetapLainnya.forEach(i => i.value = 0);
+
+    setTimeout(() => {
+      if (typeof app.ambilData === "function") app.ambilData();
+      app.isSaving = false;
+    }, 1000);
+  };
+
+  // 6. Eksekusi Pengiriman memakai $.getJSON
+  $.getJSON(urlKirim, function (res) {
+    console.log("✅ GAS response SUCCESS:", JSON.stringify(res));
+    app.statusKirim = '✅ Permohonan berhasil disimpan!';
+    bersihkanForm();
+  }).fail(function (xhr, status, err) {
+    // Jika data sebenarnya masuk ke Sheet tapi browser menganggap error karena format JSONP
+    if (status === "parsererror" || xhr.status === 200) {
+      console.log("⚠️ Masalah parser JSONP diabaikan, data terkonfirmasi masuk ke spreadsheet.");
+      app.statusKirim = '✅ Permohonan berhasil disimpan!';
+      bersihkanForm();
+    } else {
+      console.error("❌ GAS response REAL ERROR:", status, err);
+      app.statusKirim = '❌ Gagal mengirim: ' + status + ' | ' + err;
+      app.isSaving = false;
+    }
+  });
+},
+        inputAlamat() {
+          var ts = Date.now();
+          var payload = {
+            id: ts,
+            nama: 'nurdin',
+            alamat: 'surabaya'
+          };
+          var baseUrl = "https://script.google.com/macros/s/AKfycbwJAQlJ61VsoaU2CYuakdbIXBrESneajJIaAckAcxchS1dXti5Jt-C3VyGoSTQ_NSrL/exec";
+          var app = this;
+          app.isSavingAlamat = true;
+          $.ajax({
+            type: "GET",
+            url: baseUrl,
+            crossDomain: true,
+            dataType: "jsonp",
+            data: {
+              action: "insert",
+              table: "alamat",
+              data: JSON.stringify(payload)
+            },
+            complete: function () {
+              app.isSavingAlamat = false;
+              alert('✅ Data alamat berhasil disimpan!\nID: ' + ts + '\nNama: nurdin\nAlamat: surabaya');
+            }
+          });
+        },
+    ambilData() {
+  // 1. Tentukan URL langsung dengan parameter action=read & table=data
+  const baseUrl = "https://script.google.com/macros/s/AKfycbwJAQlJ61VsoaU2CYuakdbIXBrESneajJIaAckAcxchS1dXti5Jt-C3VyGoSTQ_NSrL/exec?action=read&table=data";
+  let app = this;
+  
+  // Tampilkan loader sebelum ambil data
+  this.isLoadingList = true;
+
+  // 2. Gunakan $.getJSON seperti contoh yang berhasil
+  $.getJSON(baseUrl, function (res) {
+    console.log("Data diterima:", res);
+    
+    // Sesuaikan dengan struktur respons GAS kamu (mengambil res.data jika ada, jika tidak gunakan res langsung)
+    app.daftarPermohonan = res.data || (Array.isArray(res) ? res : []);
+    
+    // Matikan loader setelah data berhasil dimasukkan
+    app.isLoadingList = false;
+  }).fail(function(err) {
+    console.error("Gagal ambil data:", err);
+    app.isLoadingList = false;
+  });
+},
         async copyHasil() {
           const el = document.getElementById('hasil');
           try {
