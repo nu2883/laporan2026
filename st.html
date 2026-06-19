@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Generator Laporan - Siap Copy ke Word</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+  <div id="app" class="max-w-4xl mx-auto px-4">
+
+    <h1 class="text-2xl font-bold text-gray-800 mb-1">Generator Laporan</h1>
+    <p class="text-gray-500 mb-6">Isi form di bawah, lalu blok & copy area "Hasil Laporan", paste ke Word.</p>
+    <p v-if="isLoading" class="text-blue-600 text-sm mb-4">⏳ Memuat data dari server...</p>
+    <p v-if="loadError" class="text-amber-600 text-sm mb-4">⚠️ {{ loadError }}</p>
+
+    <!-- FORM INPUT -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8 space-y-5">
+
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Jenis Font</label>
+          <select v-model="fontFamily" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+            <option value="Arial, Helvetica, sans-serif">Arial</option>
+            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+            <option value="Calibri, sans-serif">Calibri</option>
+            <option value="'Cambria', serif">Cambria</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="Verdana, sans-serif">Verdana</option>
+          </select>
+        </div>
+        <div class="flex-1">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Ukuran Font</label>
+          <select v-model="fontSize" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+            <option value="10">10 pt</option>
+            <option value="11">11 pt</option>
+            <option value="12">12 pt</option>
+            <option value="14">14 pt</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Paragraf Awal</label>
+        <textarea v-model="paragrafAwal" rows="4" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Data Tabel</label>
+        <div v-for="(row, i) in tabel" :key="i" class="flex gap-2 mb-2 items-center">
+          <input v-model="row.nama" placeholder="Nama" class="flex-1 border border-gray-300 rounded-md p-2 text-sm">
+          <input v-model="row.nip" placeholder="NIP" class="flex-1 border border-gray-300 rounded-md p-2 text-sm">
+          <input v-model="row.kantor" placeholder="Kantor" class="flex-1 border border-gray-300 rounded-md p-2 text-sm">
+          <button @click="hapusBaris(i)" class="text-red-500 hover:text-red-700 px-2 text-sm">✕</button>
+        </div>
+        <button @click="tambahBaris" class="text-sm text-blue-600 hover:text-blue-800 font-medium">+ Tambah Baris</button>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Paragraf Penutup</label>
+        <textarea v-model="paragrafPenutup" rows="3" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+      </div>
+
+    </div>
+
+    <!-- HASIL / AREA COPY -->
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-lg font-bold text-gray-800">Hasil Laporan</h2>
+      <button @click="copyHasil" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-md transition">
+        {{ copyLabel }}
+      </button>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <div id="hasil" :style="{ fontFamily: fontFamily, fontSize: fontSize + 'pt', color: '#000000', lineHeight: '1.6' }">
+
+        <p :style="pStyle + 'margin:0 0 12pt 0; text-align:justify; text-indent:36pt;'">{{ paragrafAwal }}</p>
+
+        <table style="border-collapse:collapse; width:100%; margin:0 0 12pt 0;">
+          <thead>
+            <tr>
+              <th :style="thStyle">No</th>
+              <th :style="thStyle">Nama</th>
+              <th :style="thStyle">NIP</th>
+              <th :style="thStyle">Kantor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, i) in tabel" :key="i">
+              <td :style="tdStyle + 'text-align:center;'">{{ i + 1 }}</td>
+              <td :style="tdStyle">{{ row.nama }}</td>
+              <td :style="tdStyle">{{ row.nip }}</td>
+              <td :style="tdStyle">{{ row.kantor }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p :style="pStyle + 'margin:0; text-align:justify; text-indent:36pt;'">{{ paragrafPenutup }}</p>
+
+      </div>
+    </div>
+
+    <p class="text-xs text-gray-400 mt-4">Catatan: hasil dibuat dengan format tabel bergaris & font Times New Roman 12pt agar saat di-paste ke Word, formatnya sudah sesuai standar surat resmi tanpa perlu dirapikan ulang.</p>
+
+  </div>
+
+  <script>
+    // =====================================================
+    // KONFIGURASI SUMBER DATA
+    // Isi API_URL kalau database/API sudah siap.
+    // Endpoint diharapkan mengembalikan JSON dengan format:
+    // {
+    //   "paragrafAwal": "...",
+    //   "paragrafPenutup": "...",
+    //   "tabel": [ { "nama": "...", "nip": "...", "kantor": "..." }, ... ]
+    // }
+    // Kosongkan ("") kalau belum ada API -> akan pakai data contoh.
+    // =====================================================
+    const API_URL = "";
+
+    new Vue({
+      el: '#app',
+      data: {
+        paragrafAwal: 'Sehubungan dengan pelaksanaan kegiatan dimaksud, kami sampaikan bahwa daftar pegawai yang ditugaskan untuk mengikuti kegiatan tersebut adalah sebagai berikut:',
+        tabel: [
+          { nama: 'Andi Saputra', nip: '198501012010011001', kantor: 'Kantor Pelayanan Pajak Surabaya' },
+          { nama: 'Budi Santoso', nip: '199003152012011002', kantor: 'Kantor Pelayanan Pajak Surabaya' },
+          { nama: 'Citra Dewi', nip: '199207202015012003', kantor: 'Kantor Pelayanan Pajak Surabaya' }
+        ],
+        paragrafPenutup: 'Demikian disampaikan, atas perhatian dan kerja samanya kami ucapkan terima kasih.',
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        fontSize: '12',
+        copyLabel: '📋 Copy ke Word',
+        isLoading: false,
+        loadError: ''
+      },
+      computed: {
+        fontInline() {
+          return 'font-family:' + this.fontFamily + '; font-size:' + this.fontSize + 'pt;';
+        },
+        pStyle() {
+          return this.fontInline;
+        },
+        thStyle() {
+          return this.fontInline + 'border:1px solid #000; padding:6px 8px; background-color:#D9D9D9; font-weight:bold; text-align:center;';
+        },
+        tdStyle() {
+          return this.fontInline + 'border:1px solid #000; padding:6px 8px;';
+        }
+      },
+      mounted() {
+        this.muatData();
+      },
+      methods: {
+        async muatData() {
+          if (!API_URL) return; // belum ada API -> tetap pakai data contoh
+          this.isLoading = true;
+          this.loadError = '';
+          try {
+            const res = await fetch(API_URL);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+
+            // Validasi ringan + isi ke state Vue
+            if (typeof data.paragrafAwal === 'string') this.paragrafAwal = data.paragrafAwal;
+            if (typeof data.paragrafPenutup === 'string') this.paragrafPenutup = data.paragrafPenutup;
+            if (Array.isArray(data.tabel)) {
+              this.tabel = data.tabel.map(row => ({
+                nama: row.nama || '',
+                nip: row.nip || '',
+                kantor: row.kantor || ''
+              }));
+            }
+          } catch (err) {
+            console.error('Gagal memuat data:', err);
+            this.loadError = 'Gagal memuat data dari server, menampilkan data contoh.';
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        tambahBaris() {
+          this.tabel.push({ nama: '', nip: '', kantor: '' });
+        },
+        hapusBaris(i) {
+          this.tabel.splice(i, 1);
+        },
+        async copyHasil() {
+          const el = document.getElementById('hasil');
+          try {
+            const htmlBlob = new Blob([el.innerHTML], { type: 'text/html' });
+            const textBlob = new Blob([el.innerText], { type: 'text/plain' });
+            const item = new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob });
+            await navigator.clipboard.write([item]);
+          } catch (err) {
+            // fallback: select node lalu pakai execCommand
+            const range = document.createRange();
+            range.selectNode(el);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+          }
+          this.copyLabel = '✅ Tersalin!';
+          setTimeout(() => { this.copyLabel = '📋 Copy ke Word'; }, 2000);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
