@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Generator Slip Gaji - Siap Copy ke Word</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+  <div id="app" class="max-w-4xl mx-auto px-4">
+
+    <h1 class="text-2xl font-bold text-gray-800 mb-1">Generator Slip Gaji</h1>
+    <p class="text-gray-500 mb-6">Isi nominal di bawah, lalu klik "Copy ke Word".</p>
+
+    <!-- FONT SETTING -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Jenis Font</label>
+          <select v-model="fontFamily" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+            <option value="Arial, Helvetica, sans-serif">Arial</option>
+            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+            <option value="Calibri, sans-serif">Calibri</option>
+            <option value="'Cambria', serif">Cambria</option>
+          </select>
+        </div>
+        <div class="flex-1">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Ukuran Font</label>
+          <select v-model="fontSize" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+            <option value="10">10 pt</option>
+            <option value="11">11 pt</option>
+            <option value="12">12 pt</option>
+            <option value="14">14 pt</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM INPUT -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <div class="grid grid-cols-2 gap-6">
+
+        <!-- KOLOM PENGHASILAN -->
+        <div>
+          <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">Penghasilan</h3>
+          <div v-for="item in penghasilan" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="number" v-model.number="item.value" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+          <div class="flex items-center justify-between mt-3 pt-2 border-t font-semibold text-gray-800">
+            <span class="text-sm">Jumlah Penghasilan</span>
+            <span class="text-sm">{{ formatRp(jumlahPenghasilan) }}</span>
+          </div>
+        </div>
+
+        <!-- KOLOM POTONGAN -->
+        <div>
+          <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">Potongan</h3>
+          <div v-for="item in potongan" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="number" v-model.number="item.value" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+          <div class="flex items-center justify-between mt-3 pt-2 border-t font-semibold text-gray-800">
+            <span class="text-sm">Jumlah Potongan</span>
+            <span class="text-sm">{{ formatRp(jumlahPotongan) }}</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-6 pt-4 border-t-2 border-gray-800 flex items-center justify-between">
+        <span class="font-bold text-gray-800">Gaji Bersih</span>
+        <span class="font-bold text-gray-800 text-lg">{{ formatRp(gajiBersih) }}</span>
+      </div>
+    </div>
+
+    <!-- HASIL / AREA COPY -->
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-lg font-bold text-gray-800">Hasil Slip Gaji</h2>
+      <button @click="copyHasil" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-md transition">
+        {{ copyLabel }}
+      </button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <div id="hasil">
+        <table style="border-collapse:collapse; width:100%;">
+          <tr>
+            <td :style="thStyle + 'width:50%;'" colspan="2">PENGHASILAN</td>
+            <td :style="thStyle + 'width:50%;'" colspan="2">POTONGAN</td>
+          </tr>
+          <tr v-for="(row, i) in pairedRows" :key="i">
+            <td :style="tdStyle">{{ row.left ? row.left.label : '' }}</td>
+            <td :style="tdStyle + 'text-align:right;'">{{ row.left ? formatRp(row.left.value) : '' }}</td>
+            <td :style="tdStyle">{{ row.right ? row.right.label : '' }}</td>
+            <td :style="tdStyle + 'text-align:right;'">{{ row.right ? formatRp(row.right.value) : '' }}</td>
+          </tr>
+          <tr>
+            <td :style="tdBoldStyle">Jumlah Penghasilan</td>
+            <td :style="tdBoldStyle + 'text-align:right;'">{{ formatRp(jumlahPenghasilan) }}</td>
+            <td :style="tdBoldStyle">Jumlah Potongan</td>
+            <td :style="tdBoldStyle + 'text-align:right;'">{{ formatRp(jumlahPotongan) }}</td>
+          </tr>
+          <tr>
+            <td :style="tdTotalStyle" colspan="3">GAJI BERSIH</td>
+            <td :style="tdTotalStyle + 'text-align:right;'">{{ formatRp(gajiBersih) }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        fontSize: '12',
+        copyLabel: '📋 Copy ke Word',
+        penghasilan: [
+          { key: 'gaji_pokok', label: 'Gaji Pokok', value: 0 },
+          { key: 'tunj_istri', label: 'Tunjangan Istri/Suami', value: 0 },
+          { key: 'tunj_anak', label: 'Tunjangan Anak', value: 0 },
+          { key: 'tunj_struktural', label: 'Tunjangan Struktural', value: 0 },
+          { key: 'tunj_umum', label: 'Tunjangan Umum', value: 0 },
+          { key: 'tunj_beras', label: 'Tunjangan Beras', value: 0 },
+          { key: 'tunj_pph', label: 'Tunjangan Pajak Penghasilan', value: 0 },
+          { key: 'pembulatan', label: 'Pembulatan', value: 0 }
+        ],
+        potongan: [
+          { key: 'pfk_beras', label: 'P.F.K Beras', value: 0 },
+          { key: 'iwp', label: 'IWP (10%)', value: 0 },
+          { key: 'pph', label: 'Pajak Penghasilan', value: 0 },
+          { key: 'sewa_rumah', label: 'Sewa Rumah Dinas', value: 0 },
+          { key: 'bpjs', label: 'Iuran BPJS', value: 0 },
+          { key: 'bpjs_tambahan', label: 'Iuran BPJS Tambahan', value: 0 }
+        ]
+      },
+      computed: {
+        jumlahPenghasilan() {
+          return this.penghasilan.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+        },
+        jumlahPotongan() {
+          return this.potongan.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+        },
+        gajiBersih() {
+          return this.jumlahPenghasilan - this.jumlahPotongan;
+        },
+        pairedRows() {
+          const max = Math.max(this.penghasilan.length, this.potongan.length);
+          const rows = [];
+          for (let i = 0; i < max; i++) {
+            rows.push({
+              left: this.penghasilan[i] || null,
+              right: this.potongan[i] || null
+            });
+          }
+          return rows;
+        },
+        fontInline() {
+          return 'font-family:' + this.fontFamily + '; font-size:' + this.fontSize + 'pt;';
+        },
+        thStyle() {
+          return this.fontInline + 'border:1px solid #000; padding:6px 8px; background-color:#D9D9D9; font-weight:bold; text-align:center;';
+        },
+        tdStyle() {
+          return this.fontInline + 'border:1px solid #000; padding:5px 8px;';
+        },
+        tdBoldStyle() {
+          return this.fontInline + 'border:1px solid #000; padding:5px 8px; font-weight:bold;';
+        },
+        tdTotalStyle() {
+          return this.fontInline + 'border:1px solid #000; padding:6px 8px; font-weight:bold; background-color:#F2F2F2;';
+        }
+      },
+      methods: {
+        formatRp(num) {
+          num = Number(num) || 0;
+          return num.toLocaleString('id-ID');
+        },
+        async copyHasil() {
+          const el = document.getElementById('hasil');
+          try {
+            const htmlBlob = new Blob([el.innerHTML], { type: 'text/html' });
+            const textBlob = new Blob([el.innerText], { type: 'text/plain' });
+            const item = new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob });
+            await navigator.clipboard.write([item]);
+          } catch (err) {
+            const range = document.createRange();
+            range.selectNode(el);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+          }
+          this.copyLabel = '✅ Tersalin!';
+          setTimeout(() => { this.copyLabel = '📋 Copy ke Word'; }, 2000);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
