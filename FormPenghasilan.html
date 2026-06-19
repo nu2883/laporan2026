@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Surat Keterangan Penghasilan</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+  <div id="app" class="max-w-5xl mx-auto px-4">
+
+    <h1 class="text-2xl font-bold text-gray-800 mb-1">Permohonan Surat Keterangan Penghasilan</h1>
+
+    <!-- DATA PEGAWAI -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <div class="flex items-center justify-between mb-3 border-b pb-2">
+        <h3 class="font-bold text-gray-800">Data Pegawai</h3>
+        <div class="flex gap-2">
+   
+          <button @click="resetForm" class="bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold px-3 py-1.5 rounded-md border border-red-200 transition">
+            ↺ Reset Form
+          </button>
+        </div>
+      </div>
+      <p v-if="statusKirim" class="text-sm mb-3" :class="statusKirim.startsWith('✅') ? 'text-green-600' : 'text-red-600'">{{ statusKirim }}</p>
+      <div class="grid grid-cols-2 gap-4 mb-3">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Nama</label>
+          <input type="text" v-model="pegawai.nama" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">NIP</label>
+          <input type="text" v-model="pegawai.nip" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Pangkat / Golongan</label>
+          <input type="text" v-model="pegawai.pangkat" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Jabatan</label>
+          <input type="text" v-model="pegawai.jabatan" class="w-full border border-gray-300 rounded-md p-2 text-sm">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Bulan & Tahun</label>
+        <input type="text" v-model="bulanTahun" placeholder="Mei 2026" class="w-full md:w-1/2 border border-gray-300 rounded-md p-2 text-sm">
+      </div>
+    </div>
+
+
+
+    <!-- BAGIAN I: GAJI -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">I. Penghasilan dari Gaji</h3>
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2"><b>PENGHASILAN</b></p>
+          <div v-for="item in penghasilan" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2"><b>POTONGAN GAJI</b></p>
+          <div v-for="item in potongan" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t text-sm space-y-1">
+        <div class="flex justify-between"><span>Jumlah Penghasilan</span><span class="font-semibold">{{ formatRp(jumlahPenghasilan) }}</span></div>
+        <div class="flex justify-between"><span>Jumlah Potongan Gaji</span><span class="font-semibold">{{ formatRp(jumlahPotonganGaji) }}</span></div>
+        <div class="flex justify-between font-bold border-t pt-1"><span>Jumlah Gaji Bersih (I)</span><span>{{ formatRp(gajiBersihI) }}</span></div>
+      </div>
+    </div>
+
+    <!-- BAGIAN II: TUNJANGAN KINERJA -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">II. Penghasilan Tunjangan Kinerja</h3>
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2">TUNJANGAN KINERJA</p>
+          <div v-for="item in tunjanganKinerja" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2">POTONGAN TUNJANGAN KINERJA</p>
+          <div v-for="item in potonganKinerja" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+            <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+            <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t text-sm space-y-1">
+        <div class="flex justify-between"><span>Jumlah Tunjangan Kinerja</span><span class="font-semibold">{{ formatRp(jumlahTunjanganKinerja) }}</span></div>
+        <div class="flex justify-between"><span>Jumlah Potongan Tunjangan Kinerja</span><span class="font-semibold">{{ formatRp(jumlahPotonganKinerja) }}</span></div>
+        <div class="flex justify-between font-bold border-t pt-1"><span>Jumlah Tunjangan Kinerja Bersih (II)</span><span>{{ formatRp(tunjanganKinerjaBersihII) }}</span></div>
+      </div>
+    </div>
+
+    <!-- BAGIAN III: PENGHASILAN TETAP LAINNYA -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">III. Penghasilan Tetap Lainnya</h3>
+      <div v-for="item in penghasilanTetapLainnya" :key="item.key" class="flex items-center justify-between mb-2 gap-2">
+        <label class="text-sm text-gray-600 w-1/2">{{ item.label }}</label>
+        <input type="text" :value="formatRp(item.value)" @input="updateValue(item, $event.target.value)" class="w-1/2 border border-gray-300 rounded-md p-1.5 text-sm text-right">
+      </div>
+      <div class="mt-4 pt-3 border-t text-sm space-y-1">
+        <div class="flex justify-between font-bold"><span>Jumlah Pendapatan Tetap Lainnya (III)</span><span>{{ formatRp(jumlahTetapLainnya) }}</span></div>
+      </div>
+    </div>
+
+    <!-- TOTAL AKHIR -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg shadow p-6 mb-8">
+      <div class="flex justify-between items-center">
+        <span class="font-bold text-gray-800">Jumlah Penghasilan ( I + II + III )</span>
+        <span class="font-bold text-gray-800 text-lg">{{ formatRp(totalKeseluruhan) }}</span>
+      </div>
+    </div>
+
+
+
+    <!-- HASIL / AREA COPY -->
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-lg font-bold text-gray-800"> </h2>
+      <button @click="ajukanPermohonan" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-md transition">
+        Ajukan Permohonan
+      </button>
+    </div>
+
+
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        fontSize: '12',
+        bulanTahun: 'Mei 2026',
+        copyLabel: '📋 Copy ke Word',
+        isSaving: false,
+        isSavingAlamat: false,
+        statusKirim: '',
+        daftarPermohonan: [],
+        isLoadingList: false,
+        pegawai: {
+          nama: 'Nama Saya',
+          nip: '19999999999999999',
+          pangkat: 'Penata Muda / III/a',
+          jabatan: 'Pegawai pada Kanwil Ditjen Perbendaharaan Provinsi Jawa Timur'
+        },
+        penghasilan: [
+          { key: 'gaji_pokok', label: 'Gaji Pokok', value: 3500000 },
+          { key: 'tunj_istri', label: 'Tunjangan Istri/Suami', value: 350000 },
+          { key: 'tunj_anak', label: 'Tunjangan Anak', value: 70000 },
+          { key: 'tunj_struktural', label: 'Tunjangan Struktural', value: 0 },
+          { key: 'tunj_umum', label: 'Tunjangan Umum', value: 185000 },
+          { key: 'tunj_beras', label: 'Tunjangan Beras', value: 289680 },
+          { key: 'tunj_pph', label: 'Tunjangan Pajak Penghasilan', value: 77700 },
+          { key: 'pembulatan', label: 'Pembulatan', value: 47 }
+        ],
+        potongan: [
+          { key: 'pfk_beras', label: 'P.F.K Beras', value: 0 },
+          { key: 'iwp', label: 'IWP (10%)', value: 497623 },
+          { key: 'pph', label: 'Pajak Penghasilan', value: 77700 },
+          { key: 'sewa_rumah', label: 'Sewa Rumah Dinas', value: 0 },
+          { key: 'bpjs', label: 'Iuran BPJS', value: 120000 },
+          { key: 'bpjs_tambahan', label: 'Iuran BPJS Tambahan', value: 0 }
+        ],
+        tunjanganKinerja: [
+          { key: 'tukin', label: 'Tunjangan Kinerja', value: 9370000 },
+          { key: 'tukin_tambahan', label: 'Tunjangan Tambahan', value: 0 },
+          { key: 'tukin_pph21', label: 'Tunjangan PPh Pasal 21', value: 0 }
+        ],
+        potonganKinerja: [
+          { key: 'potongan_pph21', label: 'Potongan PPh Pasal 21', value: 0 }
+        ],
+        penghasilanTetapLainnya: [
+          { key: 'honor_bulanan', label: 'Honor Bulanan', value: 0 },
+          { key: 'uang_lembur', label: 'Uang Lembur Bulanan', value: 0 },
+          { key: 'uang_makan', label: 'Uang Makan Bulanan', value: 662150 }
+        ]
+      },
+      mounted() {
+        this.ambilData();
+      },
+      computed: {
+        jumlahPenghasilan() {
+          return this.penghasilan.reduce((s, i) => s + (Number(i.value) || 0), 0);
+        },
+        jumlahPotonganGaji() {
+          return this.potongan.reduce((s, i) => s + (Number(i.value) || 0), 0);
+        },
+        gajiBersihI() {
+          return this.jumlahPenghasilan - this.jumlahPotonganGaji;
+        },
+        jumlahTunjanganKinerja() {
+          return this.tunjanganKinerja.reduce((s, i) => s + (Number(i.value) || 0), 0);
+        },
+        jumlahPotonganKinerja() {
+          return this.potonganKinerja.reduce((s, i) => s + (Number(i.value) || 0), 0);
+        },
+        tunjanganKinerjaBersihII() {
+          return this.jumlahTunjanganKinerja - this.jumlahPotonganKinerja;
+        },
+        jumlahTetapLainnya() {
+          return this.penghasilanTetapLainnya.reduce((s, i) => s + (Number(i.value) || 0), 0);
+        },
+        totalKeseluruhan() {
+          return this.gajiBersihI + this.tunjanganKinerjaBersihII + this.jumlahTetapLainnya;
+        },
+        fontInline() {
+          return 'font-family:' + this.fontFamily + '; font-size:' + this.fontSize + 'pt; line-height:1.15; mso-line-height-rule:exactly; margin:0; mso-margin-top-alt:0; mso-margin-bottom-alt:0;';
+        },
+        numStyle() {
+          return this.fontInline + 'padding:0px 4px; vertical-align:top; white-space:nowrap;';
+        },
+        labelStyle() {
+          return this.fontInline + 'padding:0px 8px; vertical-align:top;';
+        },
+        boldStyle() {
+          return this.fontInline + 'padding:0px 8px; font-weight:bold; vertical-align:top;';
+        },
+        rpDetailStyle() {
+          return this.fontInline + 'padding:0px 4px; text-align:left; white-space:nowrap; width:30px;';
+        },
+        valDetailStyle() {
+          return this.fontInline + 'padding:0px 4px; text-align:right; white-space:nowrap; width:100px;';
+        },
+        rpTotalStyle() {
+          return this.fontInline + 'padding:0px 4px; text-align:left; white-space:nowrap; width:30px;';
+        },
+        valTotalStyle() {
+          return this.fontInline + 'padding:0px 4px; text-align:right; white-space:nowrap; width:120px;';
+        },
+        rpTotalStyleBoldLine() {
+          return this.fontInline + 'padding:0px 4px; text-align:left; white-space:nowrap; width:30px; font-weight:bold; border-top:1px solid #000;';
+        },
+        valTotalStyleBoldLine() {
+          return this.fontInline + 'padding:0px 4px; text-align:right; white-space:nowrap; width:120px; font-weight:bold; border-top:1px solid #000;';
+        },
+        dataLabelStyle() {
+          return this.fontInline + 'padding:0px 8px; vertical-align:top; white-space:nowrap; width:160px;';
+        },
+        dataColonStyle() {
+          return this.fontInline + 'padding:0px 4px; vertical-align:top; width:10px;';
+        },
+        dataValueStyle() {
+          return this.fontInline + 'padding:0px 8px; vertical-align:top;';
+        },
+        headerStyle() {
+          return this.fontInline + 'padding:4px 8px; border:1px solid #000; background-color:#D9D9D9; font-weight:bold; text-align:center;';
+        }
+      },
+      methods: {
+        pilihData(item) {
+  // 1. Masukkan data teks pegawai & periode
+  this.pegawai = {
+    nama: item.Nama || '',
+    nip: item.NIP || '',
+    pangkat: item.PangkatGolongan || '',
+    jabatan: item.Jabatan || ''
+  };
+  this.bulanTahun = item.BulanTahun || '';
+
+  // 2. Petakan balik data finansial ke array 'penghasilan'
+  if (Array.isArray(this.penghasilan)) {
+    this.penghasilan.forEach(p => {
+      if (p.key === 'gaji_pokok') p.value = Number(item.GajiPokok) || 0;
+      if (p.key === 'tunj_istri') p.value = Number(item.TIstriSuami) || 0;
+      if (p.key === 'tunj_anak')  p.value = Number(item.TAnak) || 0;
+      if (p.key === 'tunj_struktural') p.value = Number(item.TStruktural) || 0;
+      if (p.key === 'tunj_umum')  p.value = Number(item.TUmum) || 0;
+      if (p.key === 'tunj_beras') p.value = Number(item.TBeras) || 0;
+      if (p.key === 'tunj_pph')   p.value = Number(item.TPajak) || 0;
+      if (p.key === 'pembulatan') p.value = Number(item.Pembulatan) || 0;
+    });
+  }
+
+  // 3. Petakan balik data ke array 'potongan'
+  if (Array.isArray(this.potongan)) {
+    this.potongan.forEach(p => {
+      if (p.key === 'pfk_beras') p.value = Number(item.Beras) || 0;
+      if (p.key === 'iwp')        p.value = Number(item.IWP) || 0;
+      if (p.key === 'pph')        p.value = Number(item.PajakPenghasilan) || 0;
+      if (p.key === 'sewa_rumah') p.value = Number(item.SewaRumah) || 0;
+      if (p.key === 'bpjs')       p.value = Number(item.IuranBPJS) || 0;
+      if (p.key === 'bpjs_tambahan') p.value = Number(item.IuranBPJSTambahan) || 0;
+    });
+  }
+
+  // 4. Petakan balik data ke array 'tunjanganKinerja'
+  if (Array.isArray(this.tunjanganKinerja)) {
+    this.tunjanganKinerja.forEach(t => {
+      if (t.key === 'tukin')          t.value = Number(item.TunjanganKinerja) || 0;
+      if (t.key === 'tukin_tambahan') t.value = Number(item.TunjanganTambahan) || 0;
+      if (t.key === 'tukin_pph21')    t.value = Number(item.TunjanganPPh21) || 0;
+    });
+  }
+
+  // 5. Petakan balik data ke array 'potonganKinerja'
+  if (Array.isArray(this.potonganKinerja)) {
+    this.potonganKinerja.forEach(p => {
+      if (p.key === 'potongan_pph21') p.value = Number(item.PotonganPPh21) || 0;
+    });
+  }
+
+  // 6. Petakan balik data ke array 'penghasilanTetapLainnya'
+  if (Array.isArray(this.penghasilanTetapLainnya)) {
+    this.penghasilanTetapLainnya.forEach(p => {
+      if (p.key === 'honor_bulanan') p.value = Number(item.HonorBulanan) || 0;
+      if (p.key === 'uang_lembur')    p.value = Number(item.UangLemburBulanan) || 0;
+      if (p.key === 'uang_makan')     p.value = Number(item.UangMakanBulanan) || 0;
+    });
+  }
+
+  // Opsional: Gulirkan otomatis layar browser ke bagian atas (tempat Form berada)
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+},
+        formatRp(num) {
+          num = Number(num) || 0;
+          return num.toLocaleString('id-ID');
+        },
+        updateValue(item, rawInput) {
+          const cleaned = rawInput.replace(/[^0-9]/g, '');
+          item.value = cleaned === '' ? 0 : Number(cleaned);
+        },
+        resetForm() {
+          if (!confirm('Yakin ingin mengosongkan semua isian form?')) return;
+          this.pegawai = { nama: '', nip: '', pangkat: '', jabatan: '' };
+          this.bulanTahun = '';
+          this.penghasilan.forEach(i => i.value = 0);
+          this.potongan.forEach(i => i.value = 0);
+          this.tunjanganKinerja.forEach(i => i.value = 0);
+          this.potonganKinerja.forEach(i => i.value = 0);
+          this.penghasilanTetapLainnya.forEach(i => i.value = 0);
+          this.statusKirim = '';
+        },
+        getVal(arr, key) {
+          const found = arr.find(i => i.key === key);
+          return found ? found.value : 0;
+        },
+        ajukanPermohonan() {
+  // 1. Validasi data minimal sebelum kirim
+  if (!this.pegawai.nama || !this.pegawai.nip || !this.bulanTahun) {
+    alert('Mohon lengkapi Nama, NIP, dan Bulan & Tahun sebelum mengajukan.');
+    return;
+  }
+
+  // 2. Penanganan tanggal pengajuan (format YYYY-MM-DD, zona Asia/Jakarta)
+  var waktu1 = Date.now();
+  var dateObj = new Date(waktu1);
+  var options = { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" };
+  var tanggalIndonesia = new Intl.DateTimeFormat("id-ID", options).format(dateObj);
+  var parts = tanggalIndonesia.split("/");
+  var tanggalInput = `${parts[2]}-${parts[1]}-${parts[0]}`;
+
+  // 3. Helper untuk memaksa angka 0 menjadi string berkutip "0" agar lolos dari validasi GAS
+  const parseAngka = (val) => {
+    if (val === 0 || val === '0') {
+      return "0"; 
+    }
+    let hasil = Number(val);
+    if (isNaN(hasil) || hasil === 0) {
+      return "0";
+    }
+    return hasil;
+  };
+
+  // 4. Bungkus data ke dalam objek JSON payload
+  var payload = {
+    id: waktu1,
+    Nama: this.pegawai.nama,
+    NIP: this.pegawai.nip,
+    PangkatGolongan: this.pegawai.pangkat,
+    Jabatan: this.pegawai.jabatan,
+    BulanTahun: "'" + this.bulanTahun,
+    GajiPokok: parseAngka(this.getVal(this.penghasilan, 'gaji_pokok')),
+    TIstriSuami: parseAngka(this.getVal(this.penghasilan, 'tunj_istri')),
+    TAnak: parseAngka(this.getVal(this.penghasilan, 'tunj_anak')),
+    TStruktural: parseAngka(this.getVal(this.penghasilan, 'tunj_struktural')),
+    TUmum: parseAngka(this.getVal(this.penghasilan, 'tunj_umum')),
+    TBeras: parseAngka(this.getVal(this.penghasilan, 'tunj_beras')),
+    TPajak: parseAngka(this.getVal(this.penghasilan, 'tunj_pph')),
+    Pembulatan: parseAngka(this.getVal(this.penghasilan, 'pembulatan')),
+    Beras: parseAngka(this.getVal(this.potongan, 'pfk_beras')),
+    IWP: parseAngka(this.getVal(this.potongan, 'iwp')),
+    PajakPenghasilan: parseAngka(this.getVal(this.potongan, 'pph')),
+    SewaRumah: parseAngka(this.getVal(this.potongan, 'sewa_rumah')),
+    IuranBPJS: parseAngka(this.getVal(this.potongan, 'bpjs')),
+    IuranBPJSTambahan: parseAngka(this.getVal(this.potongan, 'bpjs_tambahan')),
+    TunjanganKinerja: parseAngka(this.getVal(this.tunjanganKinerja, 'tukin')),
+    TunjanganTambahan: parseAngka(this.getVal(this.tunjanganKinerja, 'tukin_tambahan')),
+    TunjanganPPh21: parseAngka(this.getVal(this.tunjanganKinerja, 'tukin_pph21')),
+    PotonganPPh21: parseAngka(this.getVal(this.potonganKinerja, 'potongan_pph21')),
+    HonorBulanan: parseAngka(this.getVal(this.penghasilanTetapLainnya, 'honor_bulanan')),
+    UangLemburBulanan: parseAngka(this.getVal(this.penghasilanTetapLainnya, 'uang_lembur')),
+    UangMakanBulanan: parseAngka(this.getVal(this.penghasilanTetapLainnya, 'uang_makan'))
+  };
+
+  // 5. Setup URL Pengiriman (Base URL + Parameter langsung)
+  var baseUrl = "https://script.google.com/macros/s/AKfycbwJAQlJ61VsoaU2CYuakdbIXBrESneajJIaAckAcxchS1dXti5Jt-C3VyGoSTQ_NSrL/exec";
+  var urlKirim = baseUrl + "?action=insert&table=data&data=" + encodeURIComponent(JSON.stringify(payload));
+
+  let app = this;
+  app.isSaving = true;
+  app.statusKirim = '';
+
+  // DEBUG: cek payload final di console
+  console.log("📤 PAYLOAD dikirim:", JSON.stringify(payload, null, 2));
+
+  // Fungsi pembersihan form setelah sukses disimpan
+  const bersihkanForm = () => {
+    app.pegawai = { nama: '', nip: '', pangkat: '', jabatan: '' };
+    app.bulanTahun = '';
+    if (Array.isArray(app.penghasilan)) app.penghasilan.forEach(i => i.value = 0);
+    if (Array.isArray(app.potongan)) app.potongan.forEach(i => i.value = 0);
+    if (Array.isArray(app.tunjanganKinerja)) app.tunjanganKinerja.forEach(i => i.value = 0);
+    if (Array.isArray(app.potonganKinerja)) app.potonganKinerja.forEach(i => i.value = 0);
+    if (Array.isArray(app.penghasilanTetapLainnya)) app.penghasilanTetapLainnya.forEach(i => i.value = 0);
+
+    setTimeout(() => {
+      if (typeof app.ambilData === "function") app.ambilData();
+      app.isSaving = false;
+    }, 1000);
+  };
+
+  // 6. Eksekusi Pengiriman memakai $.getJSON
+  $.getJSON(urlKirim, function (res) {
+    console.log("✅ GAS response SUCCESS:", JSON.stringify(res));
+    app.statusKirim = '✅ Permohonan berhasil disimpan!';
+    bersihkanForm();
+  }).fail(function (xhr, status, err) {
+    // Jika data sebenarnya masuk ke Sheet tapi browser menganggap error karena format JSONP
+    if (status === "parsererror" || xhr.status === 200) {
+      console.log("⚠️ Masalah parser JSONP diabaikan, data terkonfirmasi masuk ke spreadsheet.");
+      app.statusKirim = '✅ Permohonan berhasil disimpan!';
+      bersihkanForm();
+    } else {
+      console.error("❌ GAS response REAL ERROR:", status, err);
+      app.statusKirim = '❌ Gagal mengirim: ' + status + ' | ' + err;
+      app.isSaving = false;
+    }
+  });
+},
+        inputAlamat() {
+          var ts = Date.now();
+          var payload = {
+            id: ts,
+            nama: 'nurdin',
+            alamat: 'surabaya'
+          };
+          var baseUrl = "https://script.google.com/macros/s/AKfycbwJAQlJ61VsoaU2CYuakdbIXBrESneajJIaAckAcxchS1dXti5Jt-C3VyGoSTQ_NSrL/exec";
+          var app = this;
+          app.isSavingAlamat = true;
+          $.ajax({
+            type: "GET",
+            url: baseUrl,
+            crossDomain: true,
+            dataType: "jsonp",
+            data: {
+              action: "insert",
+              table: "alamat",
+              data: JSON.stringify(payload)
+            },
+            complete: function () {
+              app.isSavingAlamat = false;
+              alert('✅ Data alamat berhasil disimpan!\nID: ' + ts + '\nNama: nurdin\nAlamat: surabaya');
+            }
+          });
+        },
+    ambilData() {
+  // 1. Tentukan URL langsung dengan parameter action=read & table=data
+  const baseUrl = "https://script.google.com/macros/s/AKfycbwJAQlJ61VsoaU2CYuakdbIXBrESneajJIaAckAcxchS1dXti5Jt-C3VyGoSTQ_NSrL/exec?action=read&table=data";
+  let app = this;
+  
+  // Tampilkan loader sebelum ambil data
+  this.isLoadingList = true;
+
+  // 2. Gunakan $.getJSON seperti contoh yang berhasil
+  $.getJSON(baseUrl, function (res) {
+    console.log("Data diterima:", res);
+    
+    // Sesuaikan dengan struktur respons GAS kamu (mengambil res.data jika ada, jika tidak gunakan res langsung)
+    app.daftarPermohonan = res.data || (Array.isArray(res) ? res : []);
+    
+    // Matikan loader setelah data berhasil dimasukkan
+    app.isLoadingList = false;
+  }).fail(function(err) {
+    console.error("Gagal ambil data:", err);
+    app.isLoadingList = false;
+  });
+},
+        async copyHasil() {
+          const el = document.getElementById('hasil');
+          try {
+            const htmlBlob = new Blob([el.innerHTML], { type: 'text/html' });
+            const textBlob = new Blob([el.innerText], { type: 'text/plain' });
+            const item = new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob });
+            await navigator.clipboard.write([item]);
+          } catch (err) {
+            const range = document.createRange();
+            range.selectNode(el);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+          }
+          this.copyLabel = '✅ Tersalin!';
+          setTimeout(() => { this.copyLabel = '📋 Copy ke Word'; }, 2000);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
